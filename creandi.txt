@@ -8,7 +8,6 @@ phoana.com
 email: niranjanjee@gmail.com
 username: niranjan
 password: 1xh7f0P3phoana
-
-
+old pass: Reset@123
 1xh7f0P3phoana
 

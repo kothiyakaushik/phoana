@@ -20,6 +20,17 @@ class SMSRepository
         return $code;
     }
 
+
+    public function sendOTPOnForgetPass($user)
+    {
+        $code = $this->getVerificationCodeForgetPass($user);
+        $message = "Your OTP for phoana is $code";
+        
+        $this->send($message, $user);
+        return $code;
+    }
+
+
     public function send($message, $user)
     {
         $mobile = $user->mobile;
@@ -37,6 +48,22 @@ class SMSRepository
 
         return Common::httpGet($url.http_build_query($param));
     }
+
+    public function getVerificationCodeForgetPass($user)
+    {
+
+        $expire_time_setting = Common::getAdminSetting('user_login_time');
+        $expire_time = 24;
+        if (!empty($expire_time)) {
+            $expire_time = $expire_time_setting->user_login_time;
+        }
+        $verification = Users::firstOrCreate(['mobile' => $user->mobile]);
+        $verification->forgottoken = Common::generateVerificationCode();
+        $verification->expire_at = Carbon::now()->addHours($expire_time);
+        $verification->save();
+        return $verification->forgottoken;
+    }
+
 
     public function getVerificationCode($user)
     {

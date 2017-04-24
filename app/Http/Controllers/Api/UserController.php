@@ -252,17 +252,28 @@ class UserController extends Controller
     {
         $this->validateApiToken();
 
-        $this->request['user_id'] = !empty($this->request['user_id']) ? $this->request['user_id']: "";
+        $userId = !empty($this->request['user_id']) ? $this->request['user_id']: "";
+        $mobile = !empty($this->request['mobile']) ? $this->request['mobile']: "";
+        $email = !empty($this->request['email']) ? $this->request['email']: "";
 
-        $this->request['verification_code'] = !empty($this->request['verification_code']) ? $this->request['verification_code'] : "";
+        $verificationCode = !empty($this->request['verification_code']) ? $this->request['verification_code'] : "";
 
-        if(!empty($this->request['user_id']) && !empty($this->request['verification_code']))
+        if((!empty($userId) ||  !empty($email) || !empty($mobile))  && !empty($this->request['verification_code']))
         {
 
-            $userId = $this->request['user_id'];
-            $verificationCode = $this->request['verification_code'];
-            
-            $userDetail = Users::where("id",$userId)->where('expire_at', '>', Carbon::now())->first();
+            $q = Users::where('expire_at', '>', Carbon::now());
+                            if (!empty($userId)) {
+                                $q->orWhere("id",$userId);
+                            }
+                            if (!empty($email)) {
+                                $q->orWhere("email",$email);
+                            }
+                            if (!empty($mobile)) {
+                                $q->orWhere("mobile",$mobile);
+                            }
+             $userDetail = $q->first();
+
+             echo "<pre>";print_r($userDetail);exit;
 
             if(!empty($userDetail))
             {
@@ -302,10 +313,87 @@ class UserController extends Controller
         Common::output($this->code, $this->msg, $this->responseData);
     }
 
+    /* == send otp for register user or expire otp at login time ==*/
+    public function resendOtpRegister()
+    {
+        $this->validateApiToken();
+
+        $email = !empty($this->request['email']) ? $this->request['email']: "";
+
+        $mobile = !empty($this->request['mobile']) ? $this->request['mobile'] : "";
+
+        if(!empty($mobile) || !empty($email) )
+        {
+            $q = Users::where('status','1');
+                            
+                            if (!empty($email)) {
+                                $q->orWhere("email",$email);
+                            }
+                            if (!empty($mobile)) {
+                                $q->orWhere("mobile",$mobile);
+                            }
+            $userDetail = $q->first();
+
+            if(!empty($userDetail))
+            {
+                $smsService = new SMSRepository();
+                $code = $smsService->sendOTPOnRegister($userDetail);
+
+                $this->code = "1";
+                $this->msg = "Verification code is sent to your device!";
+
+            }else{
+                $this->msg =  "User does not exists!";
+            }
+        }else{
+            $this->msg =  "Parameter value can not be blank!";
+        }
+        Common::output($this->code, $this->msg, $this->responseData);
+    }
+
+    /* == send otp for forget user==*/
+    public function resendOtpForgetpass()
+    {
+        $this->validateApiToken();
+
+        $email = !empty($this->request['email']) ? $this->request['email']: "";
+
+        $mobile = !empty($this->request['mobile']) ? $this->request['mobile'] : "";
+
+        if(!empty($mobile) || !empty($email) )
+        {
+            $q = Users::where('status','1');
+                            
+                            if (!empty($email)) {
+                                $q->orWhere("email",$email);
+                            }
+                            if (!empty($mobile)) {
+                                $q->orWhere("mobile",$mobile);
+                            }
+            $userDetail = $q->first();
+
+            if(!empty($userDetail))
+            {
+                $smsService = new SMSRepository();
+                $code = $smsService->sendOTPOnForgetPass($userDetail);
+
+                $this->code = "1";
+                $this->msg = "Verification code is sent to your device!";
+
+            }else{
+                $this->msg =  "User does not exists!";
+            }
+        }else{
+            $this->msg =  "Parameter value can not be blank!";
+        }
+        Common::output($this->code, $this->msg, $this->responseData);
+    }
+
+
     public function signin()
     {
         
-        //$this->validateApiToken();
+        $this->validateApiToken();
 
         $username = !empty($this->request['username']) ? $this->request['username']: "";
 
@@ -327,7 +415,7 @@ class UserController extends Controller
                 $userDetail = Users::where('username', $username)->orWhere('email', $email)->orWhere('mobile', $mobile)->first();
                 
                 if ($userDetail->verified_user != '1' ) {
-                    $this->msg = 'Please verify mobile or password before login.';                  
+                    $this->msg = 'Please verify mobile or email before login.';                  
                 }else{
 
                     $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_id'=> trim($deviceId), 'device_type'=> trim($deviceType), 'device_token'=> $deviceToken,'app_version'=> $appVersion);
@@ -356,7 +444,6 @@ class UserController extends Controller
         }
 
         Common::output($this->code, $this->msg, $this->responseData);
-
     }
 
     public function print_token(){
