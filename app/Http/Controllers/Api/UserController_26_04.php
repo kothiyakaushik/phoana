@@ -462,6 +462,7 @@ class UserController extends Controller
         Common::output($this->code, $this->msg, $this->responseData);
     } 
 
+
     public function signin()
     {
         
@@ -641,6 +642,7 @@ class UserController extends Controller
                             ->update($userprofiledata);
 
             $this->msg =  "User profile upadte successfully!";
+
 
         }
         else{
