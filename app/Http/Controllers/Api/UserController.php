@@ -114,7 +114,6 @@ class UserController extends Controller
         $usernameCheck = UserRepo::isUserExistWithUsername($username);
         $userMobileCheck = UserRepo::isUserExistWithMobile($mobile);
         
-
         $userid = "";
         //check user already register or not
         if ($type == "1" && !empty($fbid)) {
