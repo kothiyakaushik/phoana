@@ -22,36 +22,7 @@
              	        Congratulations! You have successfully registered your account to Striver.<br> <br>
              	        Here are your basic details. Keep it safe for your future use:<br><br>
          	        </p>
-         	        <table style="text-align: left;">
-         	            <tr>
-         	                <th>Name</th>
-         	                <td>: {{$data['data']->firstname.$data['data']->lastname}}</td>
-         	            </tr>
-         	            <tr>
-         	                <th>Email</th>
-         	                <td>: {{$data['data']->users->email}}</td>
-         	            </tr>
-         	            <tr>
-         	                <th>Phone No</th>
-         	                <td>: {{$data['data']->phone}}</td>
-         	            </tr>
-         	            <tr>
-         	                <th>Address</th>
-         	                <td>: {{$data['data']->address}}</td>
-         	            </tr>
-         	            <tr>
-         	                <th>Zipcode</th>
-         	                <td>: {{$data['data']->zipcode}}</td>
-         	            </tr>
-         	            <tr>
-         	                <th>City</th>
-         	                <td>: {{$data['data']->city}}</td>
-         	            </tr>
-         	            <tr>
-         	                <th>Country</th>
-         	                <td>: {{$data['data']->country}}</td>
-         	            </tr>
-         	        </table>
+         	        
          	        <br>  <br>
          	                Thank you!!!<br><br>
                     

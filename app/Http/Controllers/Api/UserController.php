@@ -9,6 +9,7 @@ use DB;
 use App\Models\Users;
 use App\Models\UserProfileDetail;
 use App\Repository\GeneralRepo;
+use App\Repository\MailRepo;
 use App\Repository\SMSRepository;
 use App\Repository\UserRepo;
 use App\Http\Requests;
@@ -137,6 +138,8 @@ class UserController extends Controller
 
     public function signup(){
 
+
+        //MailRepo::sendRegistrationSuccessEmail('31');
         $this->validateApiToken();
 
         $email = empty($this->request['email']) ? "" : $this->request['email'];
@@ -157,9 +160,20 @@ class UserController extends Controller
         unset($this->request['api_token']);
 
         //user already register  or not
-        $userEmailCheck = UserRepo::isUserExistWithEmail($email);
-        $usernameCheck = UserRepo::isUserExistWithUsername($username);
-        $userMobileCheck = UserRepo::isUserExistWithMobile($mobile);
+        $userEmailCheck = array();
+        if (!empty($email)) {
+            $userEmailCheck = UserRepo::isUserExistWithEmail($email);
+        }
+        
+        $usernameCheck = array();
+        if (!empty($username)) {
+            $usernameCheck = UserRepo::isUserExistWithUsername($username);
+        }
+
+        $userMobileCheck = array();
+        if (!empty($mobile)) {
+            $userMobileCheck = UserRepo::isUserExistWithMobile($mobile);
+        }
         
         $userid = "";
         $userVerified = "1";
@@ -365,7 +379,11 @@ class UserController extends Controller
                     $this->code = "1";
                     $this->msg = "OTP verified successfully.";
 
+
+
                 }else{
+                     
+
                     $this->msg =  "Verification code does not match!";
                 }
             }else{
@@ -520,7 +538,6 @@ class UserController extends Controller
         Common::output($this->code, $this->msg, $this->responseData);
     } 
 
-
     public function signin()
     {
         
@@ -566,7 +583,13 @@ class UserController extends Controller
             
                 
                 if ($userDetail->verified_user != '1' ) {
-                    $this->msg = 'Please verify mobile or email before login.';                  
+                    
+                    $smsService = new SMSRepository();
+                    $code = $smsService->sendOTPOnRegister($userDetail);
+
+                    $this->responseData['verified_user'] = "0";
+                    $this->msg = 'Please verify mobile or email before login.';
+
                 }else{
 
                     $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_id'=> trim($deviceId), 'device_type'=> trim($deviceType), 'device_token'=> $deviceToken,'app_version'=> $appVersion);
@@ -585,6 +608,7 @@ class UserController extends Controller
                     $this->code = '1';
                     $this->msg = 'You have logged in successfully.';
                     $this->responseData['userdetail'] = $userDetail;
+                    
                 }                
             }else{
                 $this->msg = "Username/email or password is wrong.";
@@ -599,7 +623,6 @@ class UserController extends Controller
 
     public function changePassword(){
         
-
         $this->validateApiToken();
 
         $userId = !empty($this->request['user_id']) ? $this->request['user_id']: "";

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Repository\GeneralRepo;
 use App\Models\AdminSettings;
 use App\Models\Users;
+use Mail;
 
 class CommonController extends Controller
 {
@@ -64,5 +65,38 @@ class CommonController extends Controller
             }
 
             return $userdetail;
+    }
+
+    public static function sendMail($data)
+    {
+
+        //echo "<pre>";print_r(view($data['templateName']));exit;
+
+        //echo view($data['templateName']);exit;
+        //echo "<pre>";print_r($data);exit;
+
+        // $userDetail = Users::where('id',$userID)->first();
+        
+        // $data['templateName']   = 'emails.register';
+        // //$data['name']           = $userProfile->firstname.$userProfile->lastname;
+        // //$data['email']          = $userDetail->email;
+        // $data['email']          = "kothiyakaushik08@gmail.com";
+        // $data['subject']        = "New Registration!";
+        // $data['data']           = $userDetail;
+        
+        
+        Mail::send('emails.register', $data, function ($message) {
+            $message->from('us@example.com', 'Laravel');
+
+            $message->to('kothiyakaushik08@gmail.com')->cc('bar@example.com');
+        });
+
+
+
+
+        // Mail::send($data['templateName'], array("data" => $data), function($message) use ($data)
+        // {
+        //     $message->to($data['email'], $data['name'])->subject($data['subject']);
+        // });    
     }
 }
