@@ -11,3 +11,16 @@ password: 1xh7f0P3phoana
 old pass: Reset@123
 1xh7f0P3phoana
 
+MAIL_DRIVER=smtp
+MAIL_HOST=mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=promotifz
+MAIL_PASSWORD=Reset@123
+MAIL_ENCRYPTION=tls
+
+MAIL_DRIVER=smtp
+MAIL_HOST=mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=niranjan
+MAIL_PASSWORD=1xh7f0P3phoana
+MAIL_ENCRYPTION=tls

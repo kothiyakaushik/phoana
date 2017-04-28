@@ -9,6 +9,7 @@ use DB;
 use App\Models\Users;
 use App\Models\UserProfileDetail;
 use App\Repository\GeneralRepo;
+use App\Repository\MailRepo;
 use App\Repository\SMSRepository;
 use App\Repository\UserRepo;
 use App\Http\Requests;
@@ -89,8 +90,56 @@ class UserController extends Controller
         return $uniuqeToken;
     }
 
+    public function checkSocialUserIsExists(){
+        $this->validateApiToken();
+        $fbid = empty($this->request['fbid']) ? "" : $this->request['fbid'];
+        $gmailid = empty($this->request['gmailid']) ? "" : $this->request['gmailid'];
+        $type = empty($this->request['type']) ? "" : $this->request['type'];
+
+        $q = Users::where('status', '1');
+                            if (!empty($fbid)) {
+
+                                $q->where("fbid", $fbid);
+                            }
+                            if (!empty($gmailid)) {
+                                $q->where("gmailid",$gmailid);
+                            } 
+                                
+        $userDetail = $q->first();
+
+       
+        $this->responseData['already_exists'] = "0";
+        $this->responseData['verified_user'] = "0";
+        
+        if (!empty($userDetail)) {
+            
+            if ($userDetail->verified_user != '1' ) {
+                $smsService = new SMSRepository();
+                $code = $smsService->sendOTPOnRegister($userDetail);
+                $this->msg = 'Your account is not verify please verify account.';
+                
+            }else{
+                $this->responseData['verified_user'] = "1";
+                $this->code = "1";
+                $this->msg = 'Your login successfully.';
+            }
+
+            $userprofiledetail = Common::userFullDetail($userDetail->id);
+            $this->responseData['userdetail'] = $userprofiledetail;
+            $this->responseData['already_exists'] = "1";
+        }else{
+            $this->responseData['verified_user'] = "1";
+            $this->responseData['already_exists'] = "0";
+            //$this->responseData['userdetail'] = $userprofiledetail;
+        }
+
+        Common::output($this->code, $this->msg, $this->responseData);
+    }
+
     public function signup(){
 
+
+        //MailRepo::sendRegistrationSuccessEmail('31');
         $this->validateApiToken();
 
         $email = empty($this->request['email']) ? "" : $this->request['email'];
@@ -101,21 +150,33 @@ class UserController extends Controller
         $fbid = empty($this->request['fbid']) ? "" : $this->request['fbid'];
         $gmailid = empty($this->request['gmailid']) ? "" : $this->request['gmailid'];
         $image = empty($this->request['image']) ? "" : $this->request['image'];
-        $device_id = empty($this->request['device_id']) ? "" : $this->request['device_id'];
-        $device_type = empty($this->request['device_type']) ? "" : $this->request['device_type'];
-        $device_token = empty($this->request['device_token']) ? "" : $this->request['device_token'];
-        $app_version = empty($this->request['app_version']) ? "" : $this->request['app_version'];
+        
+        // $device_id = empty($this->request['device_id']) ? "" : $this->request['device_id'];
+        // $device_type = empty($this->request['device_type']) ? "" : $this->request['device_type'];
+        // $device_token = empty($this->request['device_token']) ? "" : $this->request['device_token'];
+        // $app_version = empty($this->request['app_version']) ? "" : $this->request['app_version'];
         
         unset($this->request['image']);
         unset($this->request['api_token']);
 
         //user already register  or not
-        $userEmailCheck = UserRepo::isUserExistWithEmail($email);
-        $usernameCheck = UserRepo::isUserExistWithUsername($username);
-        $userMobileCheck = UserRepo::isUserExistWithMobile($mobile);
+        $userEmailCheck = array();
+        if (!empty($email)) {
+            $userEmailCheck = UserRepo::isUserExistWithEmail($email);
+        }
         
+        $usernameCheck = array();
+        if (!empty($username)) {
+            $usernameCheck = UserRepo::isUserExistWithUsername($username);
+        }
 
+        $userMobileCheck = array();
+        if (!empty($mobile)) {
+            $userMobileCheck = UserRepo::isUserExistWithMobile($mobile);
+        }
+        
         $userid = "";
+        $userVerified = "1";
         //check user already register or not
         if ($type == "1" && !empty($fbid)) {
             
@@ -125,16 +186,26 @@ class UserController extends Controller
 
             if($userfb_det){
                     
-                $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_token'=> trim($device_token), 'app_version'=> $app_version,'device_type'=> trim($device_type) );
+                if ($userfb_det->verified_user != '1' ) {
+                    
+                    $smsService = new SMSRepository();
+                    $code = $smsService->sendOTPOnRegister($userfb_det);
 
-                $userupdatecmp = array('id'=> $userfb_det->id);
-                
-                $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
+                    $this->msg = 'Please verify mobile or email before login.';
+                    $userVerified = "0";
+                }else{
 
-                $userid = $userfb_det->id;
-                $this->code = '1';
-                $this->msg = 'Your login successfully.';
-                
+                    $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_token'=> trim($device_token), 'app_version'=> $app_version,'device_type'=> trim($device_type) );
+
+                    $userupdatecmp = array('id'=> $userfb_det->id);
+                    
+                    $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
+
+                    $userid = $userfb_det->id;
+                    $userVerified = "1";
+                    $this->code = '1';
+                    $this->msg = 'Your login successfully.';
+                }
 
             }else{
                 
@@ -142,10 +213,11 @@ class UserController extends Controller
                 if(!empty($userEmailCheck) || !empty($usernameCheck) || !empty($userMobileCheck)) {
             
                     $this->responseData['already_exists'] = "1";
+                    $userVerified = "1";
                     $this->msg = "You are already registerd with this email or username or mobile no.";
                 }
                 else{
-                    $userid = GeneralRepo::inserData('users', $this->request['app_version']);
+                    $userid = GeneralRepo::inserData('users', $this->request);
                     
                     $userdetail = Users::find($userid);
 
@@ -153,6 +225,7 @@ class UserController extends Controller
                     $code = $smsService->sendOTPOnRegister($userdetail);
 
                     $this->code = "1";
+                    $userVerified = "0";
                     $this->msg = "Registration done. Verification code is sent to your device!";
                     $this->responseData['already_exists'] = "0";
                 }
@@ -166,24 +239,33 @@ class UserController extends Controller
 
             if($usergmail_det){
                 
-                $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_token'=> trim($device_token), 'app_version'=> $app_version,'device_type'=> trim($device_type) );
+                if ($usergmail_det->verified_user != '1' ) {
 
-                $userupdatecmp = array('id'=> $usergmail_det->id);
-                
-                $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
+                    $smsService = new SMSRepository();
+                    $code = $smsService->sendOTPOnRegister($usergmail_det);
 
-                $this->code = '1';
-                $this->msg = 'Your login successfully.';
-                // $this->responseData['token'] = $dupuser_det[0]->usertoken;
-                // $this->responseData['userid'] = $dupuser_det[0]->id;
-                // $this->responseData['username'] = $dupuser_det[0]->username;
-                // $this->responseData['userdetail'] = $dupuser_det;
+                    $this->msg = 'Please verify mobile or email before login.';
+                    $userVerified = "0";
+                }else{
+                    
+                        $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_token'=> trim($device_token), 'app_version'=> $app_version,'device_type'=> trim($device_type) );
+
+                        $userupdatecmp = array('id'=> $usergmail_det->id);
+                        
+                        $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
+                        
+                        $userVerified = "1";
+                        $this->code = '1';
+                        $this->msg = 'Your login successfully.';
+                }
+                    
             }else{
                 
                 //check this user name already exist or not
                 if(!empty($userEmailCheck) || !empty($usernameCheck) || !empty($userMobileCheck)) {
             
                     $this->responseData['already_exists'] = "1";
+                    $userVerified = "1";
                     $this->msg = "You are already registerd with this email or username or mobile no.";
                 }
                 else{
@@ -196,6 +278,7 @@ class UserController extends Controller
                     $code = $smsService->sendOTPOnRegister($userdetail);
 
                     $this->code = "1";
+                    $userVerified = "0";
                     $this->msg = "Registration done. Verification code is sent to your device!";
                     $this->responseData['already_exists'] = "0";
                 }
@@ -207,6 +290,7 @@ class UserController extends Controller
             
                 $this->responseData['already_exists'] = "1";
                 $this->msg = "You are already registerd with this email or username or mobile no.";
+                $userVerified = "1";
             }else{
 
                 $this->request['password'] = bcrypt($this->request['password']);
@@ -217,7 +301,6 @@ class UserController extends Controller
 
                 $smsService = new SMSRepository();
                 $code = $smsService->sendOTPOnRegister($userdetail);
-
 
                 if (!empty($image)) {
                       
@@ -234,6 +317,7 @@ class UserController extends Controller
 
                 $this->code = "1";
                 $this->msg = "Registration done. Verification code is sent to your device!";
+                $userVerified = "0";
                 $this->responseData['already_exists'] = "0";
             }
 
@@ -244,7 +328,7 @@ class UserController extends Controller
             $userdetail = Common::userFullDetail($userid);
         }
         $this->responseData['userdetail'] = $userdetail;
-
+        $this->responseData['verified_user'] = $userVerified;
         Common::output($this->code, $this->msg, $this->responseData);
     }
 
@@ -289,19 +373,17 @@ class UserController extends Controller
                     $userupdatecmp = array('id'=> $userDetail->id);
                     $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
 
+                    $userprofiledetail = Common::userFullDetail($userDetail->id);
+                    $this->responseData['userdetail'] = $userprofiledetail;
+
                     $this->code = "1";
                     $this->msg = "OTP verified successfully.";
-                    
 
-                    $userDetail->user_id = $userDetail->id;
-
-                    if (!empty($userDetail->image)) {
-                       $userDetail->image = $userDetail->image;
-                    }
-                    $this->responseData['userdetail'] = $userDetail;
 
 
                 }else{
+                     
+
                     $this->msg =  "Verification code does not match!";
                 }
             }else{
@@ -438,18 +520,12 @@ class UserController extends Controller
                     $userupdatecmp = array('id'=> $userDetail->id);
                     $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
 
+                    $userprofiledetail = Common::userFullDetail($userDetail->id);
+                    $this->responseData['userdetail'] = $userprofiledetail;
+
                     $this->code = "1";
                     $this->msg = "Password change successfully.";
                     
-
-                    $userDetail->user_id = $userDetail->id;
-
-                    if (!empty($userDetail->image)) {
-                       $userDetail->image = $userDetail->image;
-                    }
-                    $this->responseData['userdetail'] = $userDetail;
-
-
                 }else{
                     $this->msg =  "Verification code does not match!";
                 }
@@ -507,7 +583,13 @@ class UserController extends Controller
             
                 
                 if ($userDetail->verified_user != '1' ) {
-                    $this->msg = 'Please verify mobile or email before login.';                  
+                    
+                    $smsService = new SMSRepository();
+                    $code = $smsService->sendOTPOnRegister($userDetail);
+
+                    $this->responseData['verified_user'] = "0";
+                    $this->msg = 'Please verify mobile or email before login.';
+
                 }else{
 
                     $userupdate = array('last_login'=> date('Y-m-d H:i:s'),'device_id'=> trim($deviceId), 'device_type'=> trim($deviceType), 'device_token'=> $deviceToken,'app_version'=> $appVersion);
@@ -526,6 +608,7 @@ class UserController extends Controller
                     $this->code = '1';
                     $this->msg = 'You have logged in successfully.';
                     $this->responseData['userdetail'] = $userDetail;
+                    
                 }                
             }else{
                 $this->msg = "Username/email or password is wrong.";
@@ -540,7 +623,6 @@ class UserController extends Controller
 
     public function changePassword(){
         
-
         $this->validateApiToken();
 
         $userId = !empty($this->request['user_id']) ? $this->request['user_id']: "";
@@ -576,9 +658,13 @@ class UserController extends Controller
                     $userupdate = GeneralRepo::update('users', $userupdate,  $userupdatecmp);
 
                     $userProfile = UserProfileDetail::firstOrNew(array('user_id' => $userDetail->id));
+
+                    $userprofiledetail = Common::userFullDetail($userDetail->id);
+                    $this->responseData['userdetail'] = $userprofiledetail;
+
                     $this->code = "1";
                     $this->msg = "Your password is change successfully.";
-                    $this->responseData['userdetail'] = $userDetail;
+                    
 
             }else{
                 $this->msg = "Your current password is wrong.";
@@ -593,54 +679,66 @@ class UserController extends Controller
     }
 
     /* == Save user personnal info ==*/
-    public function saveUserInfo()
+    public function userProfileUpdate()
     {
         $this->validateApiToken();
 
         $userId  = $this->request['user_id'];
 
-        $userdata = array();
-        if(isset($this->request['phone']))
-            $userdata['phone'] = $this->request['phone'];
-
-        if(isset($this->request['username']))
-            $userdata['username'] = $this->request['username'];
-
-        if(isset($this->request['password']))
-            $userdata['password'] = $this->request['password'];
-
-        $userprofiledata = array();
-        if(isset($this->request['first_name']))
-            $userprofiledata['first_name'] = $this->request['first_name'];
-
-        if(isset($this->request['last_name']))
-            $userprofiledata['last_name'] = $this->request['last_name'];
-        
-        if(isset($this->request['alternative_mobile']))
-            $userprofiledata['alternative_mobile'] = $this->request['alternative_mobile'];
-
-        if(isset($this->request['address']))
-            $userprofiledata['address'] = $this->request['address'];
-
-        if(isset($this->request['zipcode']))
-            $userprofiledata['zipcode'] = $this->request['zipcode'];
-
-        if(isset($this->request['city']))
-            $userprofiledata['city'] = $this->request['city'];
-
-        if(isset($this->request['country']))
-            $userprofiledata['country'] = $this->request['country'];
-
-    
         $userDetail = Users::where("id",$userId)->first();
         if($userDetail)
         {
-            $userdetUpdate = $userDetail->update($userdata);
+            $userdata = array();
+            if(isset($this->request['mobile']))
+                $userdata['mobile'] = $this->request['mobile'];
+
+            if(isset($this->request['username']))
+                $userdata['username'] = $this->request['username'];
+
+            if(isset($this->request['password']))
+                //$userdata['password'] = $this->request['password'];
+                $userdata['password'] = bcrypt($this->request['password']);
+            //user details update
+            $userdetailUpdate = users::where('id', $userId)->update($userdata);
+
+
             
-            $userProfileUpdate = userProfileDeail::where('user_id', $userId)
-                            ->update($userprofiledata);
+            //$userprofiledata = array();
+            if(isset($this->request['first_name']))
+                $userprofiledata['first_name'] = $this->request['first_name'];
+
+            if(isset($this->request['last_name']))
+                $userprofiledata['last_name'] = $this->request['last_name'];
+            
+            if(isset($this->request['alternative_mobile']))
+                $userprofiledata['alternative_mobile'] = $this->request['alternative_mobile'];
+
+            if(isset($this->request['address']))
+                $userprofiledata['address'] = $this->request['address'];
+
+            // if(isset($this->request['zipcode']))
+            //     $userprofiledata['zipcode'] = $this->request['zipcode'];
+
+            if(isset($this->request['city']))
+                $userprofiledata['city'] = $this->request['city'];
+
+            if(isset($this->request['country']))
+                $userprofiledata['country'] = $this->request['country'];
+
+            if(isset($this->request['birthday']))
+                $userprofiledata['birthday'] = $this->request['birthday'];
+
+            $userProfileUpdaters = userProfileDetail::updateOrCreate(
+                            ['user_id' => $userId],
+                            $userprofiledata
+                        );
 
             $this->msg =  "User profile upadte successfully!";
+
+            $userDetail = Common::userFullDetail($userId);
+            $this->code = '1';
+                    
+            $this->responseData['userdetail'] = $userDetail;
 
         }
         else{
@@ -649,7 +747,31 @@ class UserController extends Controller
         Common::output($this->code, $this->msg, $this->responseData);
     }
 
+    public function logout(){
+
+        $this->validateApiToken();
+        $userid = isset($this->request['user_id']) ? $this->request['user_id']:"";
+        
+        if ($userid != '') {
+            $userupdate = array('device_token'=> "");
+
+            $userupdatecmp = array('id'=> $userid);
+                        
+            $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
+
+            $this->code = '1';
+            $this->msg = 'You are logout successfully.';
+
+        }else{
+            $this->msg = "Invalid Request";
+        }
+        
+        Common::output($this->code, $this->msg, $this->responseData);
+    }
+
     public function print_token(){
         echo $this->generateApiToken();
     }
+
+
 }
