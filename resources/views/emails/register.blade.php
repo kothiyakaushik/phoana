@@ -1,11 +1,3 @@
-<!-- <div style="background-color:#fcf9f9;border:1px solid #ede3e3;padding:10px;">
-	<p>Hello {{$data['name']}}</p>
-	<br><p>Congratulations! You have successfully registered your account to Striver.</p>
-	<br><p>Here are your basic details. Keep it safe for your future use.</p>
-	<p>Your Username is : <b>{{$data['email']}}</b></p>
-	
-	<br><p>Thank you.<br><strong>{{env("PROJECT_TITLE")}}</strong></p>
-</div> -->
 
 <html>
     <body>

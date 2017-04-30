@@ -6,16 +6,24 @@ use Illuminate\Http\Request;
 use App\Repository\GeneralRepo;
 use App\Models\AdminSettings;
 use App\Models\Users;
-use Mail;
+//use Mail;
+use View;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Message;
+use Illuminate\Support\Facades\Mail;
 
 class CommonController extends Controller
 {
     public static function output($code=0, $msg='', $responseData=array())
     {
     	header("Content-Type:text/json");
+
+        if (empty($responseData)) {
+            $responseData = (object)$responseData;
+        }
         
         $outputData = array(
-            "code"		=>$code,
+            "code"		=>(int)$code,
             "msg"		=>$msg,
             "response"	=>$responseData
         );
@@ -84,13 +92,28 @@ class CommonController extends Controller
         // $data['subject']        = "New Registration!";
         // $data['data']           = $userDetail;
         
-        
-        Mail::send('emails.register', $data, function ($message) {
-            $message->from('us@example.com', 'Laravel');
+        //echo view('emails.register');exit;
 
-            $message->to('kothiyakaushik08@gmail.com')->cc('bar@example.com');
+        //echo View::make('emails.register');exit;
+
+
+        // Mail::send('emails.register', $data, function ($message) {
+        //     $message->from('us@example.com', 'Laravel');
+
+        //     $message->to('kothiyakaushik08@gmail.com')->cc('bar@example.com');
+        // });
+
+        $code = "1234";
+        $user = array();
+        Mail::send('emails.register', compact('code'), function (Message $message) use ($user, $code) {
+            $message
+                ->to('kothiyakaushik08@gmail.com')
+                ->from('info@allcybersolutions.co', 'Phoana')
+                ->subject("OTP Verification")
+                ->embedData([
+                    'categories' => ['user_group1']
+                ], 'sendgrid/x-smtpapi');
         });
-
 
 
 
