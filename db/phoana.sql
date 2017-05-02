@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 23, 2017 at 10:23 PM
+-- Generation Time: May 02, 2017 at 08:29 PM
 -- Server version: 10.1.13-MariaDB
 -- PHP Version: 5.5.34
 
@@ -187,7 +187,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `mobile`, `verified_user`, `profile_type`, `type`, `fbid`, `gmailid`, `status`, `app_version`, `device_type`, `device_id`, `device_token`, `email_mobile_verify_code`, `forgottoken`, `usertoken`, `remember_token`, `expire_at`, `last_login`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(29, 'kkk', 'kk@gmail.com', '$2y$10$wTHm5b6x6zS7JoS3kjsnSuWmUxd0gUWvsBUxsbr8RUw1Fd0yQTQIu', '9714235022', '1', '1', '3', '', '', '1', '1.0', '1', 'ksdghds49432903efksldfh4982efkh324ot', 'asfklshafashfaskfas', '729638', '', '', '', '2017-04-24 02:01:19', '2017-04-23 19:54:25', '2017-04-23 10:31:19', '2017-04-23 14:24:25', NULL);
+(35, '', 'kothiyakaushik08@gmail.com', '$2y$10$vwAj9LlQEj6mTwVhe2C8zeqZ.Cn90BltwyZevWl3iPN.Vb.5amiZ2', '9714235022', '1', '1', '3', '', '', '1', '1.0', '1', '1f04dc7ae320c402', 'cjYbcylAZY0:APA91bEgbOYgpcL0CZ0PAIQHe5CmVnnLj9k1jx0tGHbY8qk-M1usS343-mbabzn-OfkR5LCoq4Ns_FNbGwrcrTOYEDJn6UIBfSnMYn1T4vokv75JSyCu3S0VadIOaoHJmNuPXHgZMdxJ', '', '', '', '', '2017-04-30 04:23:23', NULL, '2017-04-29 12:36:39', '2017-04-29 15:11:15', NULL),
+(39, '', 'kothiyakaushik108@gmail.com', '$2y$10$jzh5VKHzvRbwElSd.MLTUO4ATvqvepu.DwKkWf.sREFdLykBTpo66', '9898274847', '1', '1', '2', 'lfdskg09430lkjfdg0943t', 'algkfdkgf30r3rdfdsf', '1', '1.0', '1', '1f04dc7ae320c402', 'cjYbcylAZY0:APA91bEgbOYgpcL0CZ0PAIQHe5CmVnnLj9k1jx0tGHbY8qk-M1usS343-mbabzn-OfkR5LCoq4Ns_FNbGwrcrTOYEDJn6UIBfSnMYn1T4vokv75JSyCu3S0VadIOaoHJmNuPXHgZMdxJ', '', '', '', '', '2017-04-30 06:38:01', NULL, '2017-04-29 15:06:07', '2017-04-29 15:10:07', NULL),
+(40, 'kkk', 'kothiyakaushik12208@gmail.com', '$2y$10$8ImCfhSGzYxBCgI3c8W/v.cbscjvbZLjj.0.5ffxHMF.rJiLyxEzO', '9898274847', '1', '1', '1', 'lfdskg09430lkjfdg0943tsdjsdja9049r', 'algkfdkgf30r3rdfdsf', '1', '1.0', '1', '1f04dc7ae320c402', 'cjYbcylAZY0:APA91bEgbOYgpcL0CZ0PAIQHe5CmVnnLj9k1jx0tGHbY8qk-M1usS343-mbabzn-OfkR5LCoq4Ns_FNbGwrcrTOYEDJn6UIBfSnMYn1T4vokv75JSyCu3S0VadIOaoHJmNuPXHgZMdxJ', '', '', '', '', '2017-04-30 06:53:34', '2017-04-30 10:42:43', '2017-04-29 15:23:34', '2017-05-01 13:18:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -212,6 +214,7 @@ CREATE TABLE `users_profile_detail` (
   `state` char(15) COLLATE utf8_unicode_ci NOT NULL,
   `country` char(15) COLLATE utf8_unicode_ci NOT NULL,
   `pincode` char(7) COLLATE utf8_unicode_ci NOT NULL,
+  `is_completed` enum('0','1') COLLATE utf8_unicode_ci NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -221,8 +224,8 @@ CREATE TABLE `users_profile_detail` (
 -- Dumping data for table `users_profile_detail`
 --
 
-INSERT INTO `users_profile_detail` (`id`, `user_id`, `first_name`, `last_name`, `image`, `alternative_mobile`, `userwebsite`, `address`, `birthday`, `usernotification`, `latitude`, `longitude`, `city`, `state`, `country`, `pincode`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 29, 'kaushik', 'kothiya', '', '', '', '', '0000-00-00', '1', '90345', '09376309673', '', '', '', '', NULL, '2017-04-23 14:22:36', NULL);
+INSERT INTO `users_profile_detail` (`id`, `user_id`, `first_name`, `last_name`, `image`, `alternative_mobile`, `userwebsite`, `address`, `birthday`, `usernotification`, `latitude`, `longitude`, `city`, `state`, `country`, `pincode`, `is_completed`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 40, 'kaushik', 'kothiya', '', '7905270624', '', 'lfhdagd dfg sdgd gsd', '0000-00-00', '1', '', '', '', '', '', '', '0', '2017-05-01 13:18:00', '2017-05-01 13:18:00', NULL);
 
 --
 -- Indexes for dumped tables
@@ -306,7 +309,7 @@ ALTER TABLE `states`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 --
 -- AUTO_INCREMENT for table `users_profile_detail`
 --
