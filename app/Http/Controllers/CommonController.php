@@ -72,6 +72,12 @@ class CommonController extends Controller
                $userdetail->image = $image;
             }
 
+
+            // if (empty($userdetail->userProfile))
+            // {
+            //     $userdetail->userProfile = (object)array();
+            // }
+            
             return $userdetail;
     }
 

@@ -8,7 +8,7 @@ class UserProfileDetail extends Model
 {
 
 	protected $fillable = [
-        'user_id','first_name','last_name','image','alternative_mobile','userwebsite','address','birthday','latitude','city','state','country','pincode'
+        'user_id','first_name','last_name','image','alternative_mobile','userwebsite','address','birthday','latitude','city','state','country','pincode', 'is_completed'
     ];
     protected $table = 'users_profile_detail';
     

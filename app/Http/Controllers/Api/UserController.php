@@ -137,6 +137,86 @@ class UserController extends Controller
         Common::output($this->code, $this->msg, $this->responseData);
     }
 
+    public function socialSignIn(){
+        
+        $this->validateApiToken();
+        $email = empty($this->request['email']) ? "" : $this->request['email'];
+        $type = empty($this->request['type']) ? "" : $this->request['type'];
+        $fbid = empty($this->request['fbid']) ? "" : $this->request['fbid'];
+        $gmailid = empty($this->request['gmailid']) ? "" : $this->request['gmailid'];
+        $device_id = empty($this->request['device_id']) ? "" : $this->request['device_id'];
+        $device_type = empty($this->request['device_type']) ? "" : $this->request['device_type'];
+        $device_token = empty($this->request['device_token']) ? "" : $this->request['device_token'];
+        $app_version = empty($this->request['app_version']) ? "" : $this->request['app_version'];
+
+        $q = Users::where('status', '1');
+                            if (!empty($fbid)) {
+                                $q->where("fbid", $fbid);
+                            }
+                            if (!empty($gmailid)) {
+                                $q->where("gmailid",$gmailid);
+                            } 
+                                
+        $userDetail = $q->first();
+
+       
+        $verified_user = "0";
+        $already_exists = "0";
+        $is_completed = "0";
+
+        if (!empty($userDetail)) {
+            
+            $userid = $userDetail->id;
+            $userdetail = Common::userFullDetail($userDetail->id);
+            
+            //echo "<pre>";print_r($userdetail);exit;
+
+            //profile is completed or not
+            if (!empty($userdetail->userProfile->is_completed) && $userdetail->userProfile->is_completed == '1') {
+                $already_exists = "1";
+                $is_completed = "1";
+            }
+
+            //mobileno verified or not
+            if (!empty($userdetail->userProfile->verified_user) && $userdetail->userProfile->verified_user == '1') {
+                $verified_user = "1";
+
+            }
+            $this->msg = "";
+            $already_exists = "1";
+
+        }else{
+
+            $userid = GeneralRepo::inserData('users', $this->request);
+            $userdetail = Users::find($userid);
+            $this->code = "1";
+            $userVerified = "0";
+            $this->msg = "Registration done.";
+            
+            $verified_user = "0";
+            $already_exists = "1";
+            $is_completed = "0";
+        }
+
+        $userdetail = array();
+        if (!empty($userid)) {
+            $userdetail = Common::userFullDetail($userid);
+        }else{
+            $userdetail = (object)array();
+
+        }
+
+        //echo "<pre>";print_r($userdetail);exit;
+
+        $this->responseData['userdetail'] = $userdetail;
+        $this->responseData['verified_user'] = $verified_user;
+        $this->responseData['already_exists'] = $already_exists;
+        $this->responseData['is_completed'] = $is_completed;
+
+        Common::output($this->code, $this->msg, $this->responseData);
+    }
+
+
     public function signup(){
 
 
@@ -403,6 +483,7 @@ class UserController extends Controller
         }
         Common::output($this->code, $this->msg, $this->responseData);
     }
+
 
     /* == send otp for register user or expire otp at login time ==*/
     public function resendOtpRegister()
@@ -693,11 +774,12 @@ class UserController extends Controller
     {
         $this->validateApiToken();
 
-        $userId  = $this->request['user_id'];
-
+        $userId  = !empty($this->request['user_id']) ? $this->request['user_id'] : "";
+        
         $userDetail = Users::where("id",$userId)->first();
         if($userDetail)
         {
+
             $userdata = array();
             if(isset($this->request['mobile']))
                 $userdata['mobile'] = $this->request['mobile'];
@@ -705,14 +787,53 @@ class UserController extends Controller
             if(isset($this->request['username']))
                 $userdata['username'] = $this->request['username'];
 
-            if(isset($this->request['password']))
-                //$userdata['password'] = $this->request['password'];
-                $userdata['password'] = bcrypt($this->request['password']);
+            // if(isset($this->request['password']))
+            //     //$userdata['password'] = $this->request['password'];
+            //     $userdata['password'] = bcrypt($this->request['password']);
+            
             //user details update
             $userdetailUpdate = users::where('id', $userId)->update($userdata);
 
+            $userProfileDetail = userProfileDeail::where("user_id",$userId)->first();
+            if (!empty($userProfileDetail)) {
+                
+                if ($userProfileDetail->verified_user == '0') {
+                    
+                    $userMobileCheck = array();
+                    if (!empty($userdata['mobile'])) {
+                        $userMobileCheck = UserRepo::isUserExistWithMobile($userdata['mobile']);
 
-            
+                        if (!empty($userMobileCheck)) {
+                            
+                            $verification_code_sent = "0";
+                            $already_exists = "1";
+                            $this->msg = "You are already registerd with this mobile no.";
+
+                        }else{
+
+                            $userid = GeneralRepo::inserData('users', $this->request);
+                            $userdetail = Users::find($userid);
+
+                            $smsService = new SMSRepository();
+                            $code = $smsService->sendOTPOnRegister($userdetail);
+
+                            $this->code = "1";
+                            $already_exists = "0";
+                            $verification_code_sent = "1";
+                            $verification_code = $code;
+                            $this->msg = "Verification code is sent to your device!";
+                            
+                        }
+                    }
+
+
+                }else{
+                    
+                }
+
+
+            }
+
             //$userprofiledata = array();
             if(isset($this->request['first_name']))
                 $userprofiledata['first_name'] = $this->request['first_name'];
