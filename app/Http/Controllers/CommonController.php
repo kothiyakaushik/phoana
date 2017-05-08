@@ -12,6 +12,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Mail;
 
+
 class CommonController extends Controller
 {
     public static function output($code=0, $msg='', $responseData=array())
@@ -28,6 +29,10 @@ class CommonController extends Controller
             "response"	=>$responseData
         );
         
+        //return response()->json($outputData);
+        
+        //return response()->json($outputData);
+
         echo json_encode($outputData);
         exit;
     }
@@ -68,15 +73,12 @@ class CommonController extends Controller
             $userdetail->userProfile;
             $userdetail->user_id = $userdetail->id;
 
-            if (!empty($image)) {
-               $userdetail->image = $image;
+
+
+            if (!empty($userdetail->userProfile->image)) {
+                $userdetail->userProfile->image = url('/images/users/').'/'.$userdetail->userProfile->image;
             }
-
-
-            // if (empty($userdetail->userProfile))
-            // {
-            //     $userdetail->userProfile = (object)array();
-            // }
+            
             
             return $userdetail;
     }
@@ -127,5 +129,78 @@ class CommonController extends Controller
         // {
         //     $message->to($data['email'], $data['name'])->subject($data['subject']);
         // });    
+    }
+
+    public static function uploadProfilePicture($data)
+    {
+
+
+        $imgName            = !empty($data['imageName']) ? $data['imageName'] : "";
+        $imgFile            = !empty($data['imageFile']) ? $data['imageFile'] : "";
+        $destPath           = !empty($data['destPath']) ? $data['destPath'] : "";
+        $resizeDestPath     = !empty($data['resizeDestPath']) ? $data['resizeDestPath'] : "";
+        $resizeOriginal     = !empty($data['resizeOriginal']) ? $data['resizeOriginal'] : false;
+        if(!empty($resizeDestPath)) // make thumbnail image
+        {
+            // resize 100x100
+            self::resizeImageTo(100,$imgName, $imgFile, $resizeDestPath);
+        }
+        if($resizeOriginal) // resize original image
+            $savedImage = self::resizeImageTo(300,$imgName, $imgFile, $destPath);
+        else
+            $savedImage = $imgFile->move($destPath, $imgName);
+        
+        if($savedImage)
+            return true;
+        else{
+            return false;
+        }
+    }
+
+    public static function resizeImageTo($size, $imageName, $imageFile, $imagePath)
+    {
+
+        $thumb_img = Image::make($imageFile->getRealPath())->resize($size, $size,function($constraint){
+             $constraint->aspectRatio();
+         });
+         $thumb_img->save($imagePath.'/'.$imageName);
+        return true;
+    }
+
+    public static function removeProfilePicture($oldProfilePic, $destPath){
+            
+        if (@unlink($destPath.'/'.$oldProfilePic))
+        {
+            return true;
+        }else{
+            return false;
+        }
+            
+    }
+
+    public static function checkPasswordFormat($password, $userId){
+
+        // if (preg_match("^(?=.*?[A-Z])(?=(.*[a-z]){1,})(?=(.*[\d]){1,})(?=(.*[\W]){1,})(?!.*\s).{8,}$", $password, $match)) {
+            
+
+        //     print "Match found!";
+        // }else{
+        //     print "no Match found!";
+        // }
+
+        //if (preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])(?=\S*[\W])\S*$', $password))
+
+        if ($password) {
+            
+            if(preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])\S*$', $password))
+            {
+                print "Match found!";
+            }else{
+                print "no Match found!";
+            }
+        }
+    
+        
+        
     }
 }
