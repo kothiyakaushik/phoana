@@ -224,7 +224,7 @@ class UserController extends Controller
 
         $password = empty($this->request['password']) ? "" : $this->request['password'];
 
-        $passcheck = Common::checkPasswordFormat($password, $userId="");
+        $passcheck = Common::checkPasswordFormat($password, $userId="35");
 
         dd($passcheck);exit();
 
@@ -392,6 +392,12 @@ class UserController extends Controller
                 }else{
 
                     $userid = GeneralRepo::inserData('users', $this->request);
+
+                    //user's password save  in password hisory
+                    $passhist = array();
+                    $passhist['user_id'] = $userid;
+                    $passhist['password'] = $this->request['password'];
+                    $userpass_histid = GeneralRepo::inserData('password_histories', $passhist);
                     
                     $userdetail = Users::find($userid);
 
@@ -621,6 +627,12 @@ class UserController extends Controller
                     $userupdatecmp = array('id'=> $userDetail->id);
                     $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
 
+                    //user's password save  in password hisory
+                    $passhist = array();
+                    $passhist['user_id'] = $userDetail->id;
+                    $passhist['password'] = $password;
+                    $userpasshist = GeneralRepo::inserData('password_histories', $passhist);
+
                     $userprofiledetail = Common::userFullDetail($userDetail->id);
                     $this->responseData['userdetail'] = $userprofiledetail;
 
@@ -759,6 +771,12 @@ class UserController extends Controller
                     
                     $userupdate = GeneralRepo::update('users', $userupdate,  $userupdatecmp);
 
+                    //user's password save  in password hisory
+                    $passhist = array();
+                    $passhist['user_id'] = $userDetail->id;
+                    $passhist['password'] = $new_password;
+                    $userpass_histid = GeneralRepo::inserData('password_histories', $passhist);
+
                     $userProfile = UserProfileDetail::firstOrNew(array('user_id' => $userDetail->id));
 
                     $userprofiledetail = Common::userFullDetail($userDetail->id);
@@ -885,6 +903,8 @@ class UserController extends Controller
                 
             }
 
+
+
             $userProfileUpdaters = userProfileDetail::updateOrCreate(
                             ['user_id' => $userId],
                             $userprofiledata
@@ -892,7 +912,7 @@ class UserController extends Controller
 
 
             
-            if (!empty($userProfileDetail)) {
+            //if (!empty($userProfileDetail)) {
                 
                 $userMobileCheck = array();
                 if (!empty($userdata['mobile'])) {
@@ -938,8 +958,8 @@ class UserController extends Controller
 
                     }
                 }
-
-            }
+                
+            //}
 
             $this->msg =  "User profile upadte successfully!";
 

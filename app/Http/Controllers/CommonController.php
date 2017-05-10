@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Repository\GeneralRepo;
 use App\Models\AdminSettings;
 use App\Models\Users;
+use App\Models\PasswordHistory;
+use Hash;
 //use Mail;
 use View;
 use Illuminate\Mail\Mailable;
@@ -190,13 +192,41 @@ class CommonController extends Controller
 
         //if (preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])(?=\S*[\W])\S*$', $password))
 
+        $msg = "";
+        $code = "1";
         if ($password) {
             
-            if(preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])\S*$', $password))
+            if(preg_match_all('$\S*(?=\S{8,10})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])(?=\S*[\W])\S*$', $password))
             {
-                print "Match found!";
+                $msg = "Minimum 8 and Maximum 10 characters at least 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character";
+                $code = "0";
             }else{
-                print "no Match found!";
+                
+                if (!empty($userId)) {
+                    
+                    $passhist = PasswordHistory::select("id", 'user_id', "password")->where('user_id', $userId)->get();
+
+                    //$newPassword = 'Admin_12345';
+
+                    //echo "<pre>";print_r($passhist);exit;
+
+                    //echo  $new_password= bcrypt($newPassword);exit;
+
+
+                    foreach($passhist as $userdet => $uservalue){
+                        
+                        if(Hash::check($password, $uservalue->password)){
+                            echo "Sorry can't use the same password twice";exit;
+                        }else{
+                            //echo "no Sorry can't use the same password twice";exit;
+                        }
+                    }
+                }
+
+
+                $msg = "Minimum 8 and Maximum 10 characters at least 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character";
+                $code = "0";
+
             }
         }
     
