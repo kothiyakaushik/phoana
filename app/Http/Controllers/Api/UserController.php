@@ -222,12 +222,6 @@ class UserController extends Controller
 
     public function signup(){
 
-        $password = empty($this->request['password']) ? "" : $this->request['password'];
-
-        $passcheck = Common::checkPasswordFormat($password, $userId="35");
-
-        dd($passcheck);exit();
-
         //MailRepo::sendRegistrationSuccessEmail('31');
         $this->validateApiToken();
 
@@ -390,6 +384,10 @@ class UserController extends Controller
                     $this->msg = "You are already registerd with this email or username or mobile no.";
                     $userVerified = "1";
                 }else{
+
+                    //check password is valid or not
+                    $passcheck = Common::checkPasswordFormat($password, "");
+
 
                     $userid = GeneralRepo::inserData('users', $this->request);
 

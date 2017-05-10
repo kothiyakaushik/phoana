@@ -194,9 +194,11 @@ class CommonController extends Controller
 
         $msg = "";
         $code = "1";
+        $is_exist = "0";
         if ($password) {
             
-            if(preg_match_all('$\S*(?=\S{8,10})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])(?=\S*[\W])\S*$', $password))
+            //if(preg_match_all('$\S*(?=\S{8,10})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])(?=\S*[\W])\S*$', $password))
+            if (!preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $password))
             {
                 $msg = "Minimum 8 and Maximum 10 characters at least 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character";
                 $code = "0";
@@ -206,7 +208,7 @@ class CommonController extends Controller
                     
                     $passhist = PasswordHistory::select("id", 'user_id', "password")->where('user_id', $userId)->get();
 
-                    //$newPassword = 'Admin_12345';
+                    //$newPassword = 'Kaushik_12345';
 
                     //echo "<pre>";print_r($passhist);exit;
 
@@ -216,21 +218,21 @@ class CommonController extends Controller
                     foreach($passhist as $userdet => $uservalue){
                         
                         if(Hash::check($password, $uservalue->password)){
-                            echo "Sorry can't use the same password twice";exit;
-                        }else{
-                            //echo "no Sorry can't use the same password twice";exit;
+                            //echo "Sorry can't use the same password twice";exit;
+                            $msg = "Sorry can't use the same password twice";
+                            $code = "0";
+                            $is_exist = "1";
+
                         }
                     }
                 }
 
-
-                $msg = "Minimum 8 and Maximum 10 characters at least 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character";
-                $code = "0";
-
             }
         }
-    
-        
-        
+
+        $res['code'] = $code;
+        $res['message'] = $msg;
+        $res['is_exist'] = $is_exist;
+        return $res;
     }
 }
