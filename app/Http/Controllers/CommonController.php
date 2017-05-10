@@ -7,6 +7,7 @@ use App\Repository\GeneralRepo;
 use App\Models\AdminSettings;
 use App\Models\Users;
 use App\Models\PasswordHistory;
+use App\Models\Countries;
 use Hash;
 //use Mail;
 use View;
@@ -206,7 +207,7 @@ class CommonController extends Controller
                 
                 if (!empty($userId)) {
                     
-                    $passhist = PasswordHistory::select("id", 'user_id', "password")->where('user_id', $userId)->get();
+                    $passhist = PasswordHistory::select("id", 'user_id', "password")->where('user_id', $userId)->orderBy('id', 'desc')->take(3)->get();
 
                     //$newPassword = 'Kaushik_12345';
 
@@ -234,5 +235,38 @@ class CommonController extends Controller
         $res['message'] = $msg;
         $res['is_exist'] = $is_exist;
         return $res;
+    }
+
+    public static function getCountryList($countryId){
+
+        $q = Countries::where('status', "1");
+        if ($countryId) {
+           $q->where('id', $countryId);
+        }
+        $country =  $q->orderBy('name', 'asc')->get();
+
+        //echo "<pre>";print_r($country);exit;
+        return $country;
+    }
+
+    
+    public static function updateUserProfileComplete($userId){
+        if ($userId) {
+            $userDetail = self::userFullDetail($userId);
+
+
+            if ( $userDetail->userProfile->is_completed != '1') {
+
+                if ($userDetail->verified_user == '1' && $userDetail->userProfile->first_name != '' && $userDetail->userProfile->last_name != '') {
+                    
+                    $userupdatecmp = array('user_id'=> $userId);
+                    $userupdate = array();
+                    $userupdate['is_completed'] = '1';
+                    $userdevice = GeneralRepo::update('users_profile_detail', $userupdate, $userupdatecmp);
+                }
+
+            }
+
+        }
     }
 }

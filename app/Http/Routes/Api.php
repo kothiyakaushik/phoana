@@ -11,6 +11,13 @@ Route::group(['prefix'=>'api', 'namespace'=>'Api'],function(){
 	Route::post('/social_signin','UserController@socialSignIn')->name("social_signin");
 	Route::post('/userProfileUpdate','UserController@userProfileUpdate')->name("userProfileUpdate");
 	Route::post('/logout','UserController@logout')->name("logout");
+
+
+	Route::post('/getCountryList','GeneralController@getCountryList')->name("getCountryList");
+	Route::post('/getStateList','GeneralController@getStateList')->name("getStateList");
+
+	
 	
 	Route::post('/print_token','UserController@print_token')->name("print_token");
 });
+

@@ -171,9 +171,12 @@ class UserController extends Controller
         if ($userDetail) {
             
             $userid = $userDetail->id;
+
+            //update profile is complete or not 
+            $userProfileStatus = Common::updateUserProfileComplete($userDetail->id);
+
+            //get user info
             $userdetail = Common::userFullDetail($userDetail->id);
-            
-            //echo "<pre>";print_r($userdetail);exit;
 
             //profile is completed or not
             if (!empty($userdetail->userProfile->is_completed) && $userdetail->userProfile->is_completed == '1') {
@@ -181,8 +184,9 @@ class UserController extends Controller
                 $is_completed = "1";
             }
 
+            
             //mobileno verified or not
-            if (!empty($userdetail->userProfile->verified_user) && $userdetail->userProfile->verified_user == '1') {
+            if (!empty($userdetail->verified_user) && $userdetail->verified_user == '1') {
                 $verified_user = "1";
 
             }
@@ -378,17 +382,23 @@ class UserController extends Controller
 
             }elseif ($type == "3") {
                 
-                if(!empty($userEmailCheck) || !empty($usernameCheck) || !empty($userMobileCheck)) {
+
+
+                //check password is valid or not
+                $passcheck = Common::checkPasswordFormat($password, "");
+
+                if ($passcheck['code'] != '1') {
+                    
+                    $this->msg = $passcheck['message'];
+                    $userVerified = "1";
+                }
+                elseif(!empty($userEmailCheck) || !empty($usernameCheck) || !empty($userMobileCheck)) {
                 
-                    $this->responseData['already_exists'] = "1";
                     $this->msg = "You are already registerd with this email or username or mobile no.";
                     $userVerified = "1";
                 }else{
 
-                    //check password is valid or not
-                    $passcheck = Common::checkPasswordFormat($password, "");
-
-
+                    
                     $userid = GeneralRepo::inserData('users', $this->request);
 
                     //user's password save  in password hisory
@@ -616,27 +626,38 @@ class UserController extends Controller
             {
                 if($verificationCode == $userDetail->forgottoken)
                 {
-                    $password= bcrypt($this->request['password']);
-                    $userupdate = array(
-                            'forgottoken' => "", 
-                            "password"=> $password
-                        );
-                    
-                    $userupdatecmp = array('id'=> $userDetail->id);
-                    $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
 
-                    //user's password save  in password hisory
-                    $passhist = array();
-                    $passhist['user_id'] = $userDetail->id;
-                    $passhist['password'] = $password;
-                    $userpasshist = GeneralRepo::inserData('password_histories', $passhist);
+                    //check password is valid or not
+                    $passcheck = Common::checkPasswordFormat($password, $userDetail->id);
+
+                    if ($passcheck['code'] != '1') {
+                        
+                        $this->msg = $passcheck['message'];
+                        
+                    }else{
+
+                        $password= bcrypt($this->request['password']);
+                        $userupdate = array(
+                                'forgottoken' => "", 
+                                "password"=> $password
+                            );
+                        
+                        $userupdatecmp = array('id'=> $userDetail->id);
+                        $userdevice = GeneralRepo::update('users', $userupdate, $userupdatecmp);
+
+                        //user's password save  in password hisory
+                        $passhist = array();
+                        $passhist['user_id'] = $userDetail->id;
+                        $passhist['password'] = $password;
+                        $userpasshist = GeneralRepo::inserData('password_histories', $passhist);
+
+                        $this->code = "1";
+                        $this->msg = "Password change successfully.";
+                    }
 
                     $userprofiledetail = Common::userFullDetail($userDetail->id);
                     $this->responseData['userdetail'] = $userprofiledetail;
 
-                    $this->code = "1";
-                    $this->msg = "Password change successfully.";
-                    
                 }else{
                     $this->msg =  "Verification code does not match!";
                 }
@@ -716,6 +737,9 @@ class UserController extends Controller
                     $userProfile->longitude = $longitude;
                     $userProfile->save();
 
+                    //update profile is complete or not 
+                    $userProfileStatus = Common::updateUserProfileComplete($userDetail->id);
+
                     $userDetail = Common::userFullDetail($userDetail->id);
                     $this->code = '1';
                     $this->msg = 'You have logged in successfully.';
@@ -736,7 +760,6 @@ class UserController extends Controller
     public function changePassword(){
         
         $this->validateApiToken();
-
         $userId = !empty($this->request['user_id']) ? $this->request['user_id']: "";
         $email = !empty($this->request['email']) ? $this->request['email']: "";
         $mobile = !empty($this->request['mobile']) ? $this->request['mobile']: "";
@@ -758,32 +781,41 @@ class UserController extends Controller
                             if (!empty($mobile)) {
                                 $q->where("mobile",$mobile);
                             }
-                $userDetail = $q->first();
+                    $userDetail = $q->first();
 
-                
-                $new_password= bcrypt($this->request['new_password']);
-
-                $userupdate = array('password' => $new_password);
-
-                    $userupdatecmp = array('id'=> $userDetail->id);
                     
-                    $userupdate = GeneralRepo::update('users', $userupdate,  $userupdatecmp);
+                    //check password is valid or not
+                    $passcheck = Common::checkPasswordFormat($this->request['new_password'], $userDetail->id);
 
-                    //user's password save  in password hisory
-                    $passhist = array();
-                    $passhist['user_id'] = $userDetail->id;
-                    $passhist['password'] = $new_password;
-                    $userpass_histid = GeneralRepo::inserData('password_histories', $passhist);
+                    if ($passcheck['code'] != '1') {
+                        
+                        $this->msg = $passcheck['message'];
+                        
+                    }else{
 
-                    $userProfile = UserProfileDetail::firstOrNew(array('user_id' => $userDetail->id));
+                        $new_password= bcrypt($this->request['new_password']);
+
+                        $userupdate = array('password' => $new_password);
+
+                        $userupdatecmp = array('id'=> $userDetail->id);
+                        
+                        $userupdate = GeneralRepo::update('users', $userupdate,  $userupdatecmp);
+
+                        //user's password save  in password hisory
+                        $passhist = array();
+                        $passhist['user_id'] = $userDetail->id;
+                        $passhist['password'] = $new_password;
+                        $userpass_histid = GeneralRepo::inserData('password_histories', $passhist);
+
+                        $userProfile = UserProfileDetail::firstOrNew(array('user_id' => $userDetail->id));
+
+                        $this->code = "1";
+                        $this->msg = "Your password is change successfully.";
+                        
+                    }
 
                     $userprofiledetail = Common::userFullDetail($userDetail->id);
                     $this->responseData['userdetail'] = $userprofiledetail;
-
-                    $this->code = "1";
-                    $this->msg = "Your password is change successfully.";
-                    
-
             }else{
                 $this->msg = "Your current password is wrong.";
             }
@@ -959,6 +991,9 @@ class UserController extends Controller
                 
             //}
 
+            //update profile is complete or not 
+            $userProfileStatus = Common::updateUserProfileComplete($userDetail->id);
+
             $this->msg =  "User profile upadte successfully!";
 
             $userDetail = Common::userFullDetail($userId);
@@ -972,6 +1007,8 @@ class UserController extends Controller
         }
         Common::output($this->code, $this->msg, $this->responseData);
     }
+
+
 
     public function logout(){
 
