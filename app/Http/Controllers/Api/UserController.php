@@ -466,10 +466,10 @@ class UserController extends Controller
                                 $q->where("email",$email);
                             }
                             if (!empty($userId)) {
-                                $q->orWhere("id",$userId);
+                                $q->where("id",$userId);
                             }
                             if (!empty($mobile)) {
-                                $q->where("mobile",$mobile);
+                                $q->orWhere("mobile",$mobile);
                             }
              $userDetail = $q->first();
 
@@ -740,12 +740,13 @@ class UserController extends Controller
                     //update profile is complete or not 
                     $userProfileStatus = Common::updateUserProfileComplete($userDetail->id);
 
-                    $userDetail = Common::userFullDetail($userDetail->id);
+                    
                     $this->code = '1';
                     $this->msg = 'You have logged in successfully.';
-                    $this->responseData['userdetail'] = $userDetail;
                     
-                }                
+                }
+                $userDetail = Common::userFullDetail($userDetail->id);
+                $this->responseData['userdetail'] = $userDetail;
             }else{
                 $this->msg = "Username/email or password is wrong.";
             }
@@ -1007,8 +1008,6 @@ class UserController extends Controller
         }
         Common::output($this->code, $this->msg, $this->responseData);
     }
-
-
 
     public function logout(){
 

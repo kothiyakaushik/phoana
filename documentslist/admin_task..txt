@@ -1,0 +1,28 @@
+
+1) Employee Management
+
+
+2) User Management
+3) Vendor Management
+4) Cenotaph Management
+5) Sweet Memory Management
+6) Template Management
+7) Album Management
+8) Frame Management
+9) Offer Management
+10) Order Assignment
+11) Order Tracking
+12) Transaction Management
+13) country management
+14) state management
+15) city management
+16) Pincode Management
+17) Order regarding Request management
+18) Reports: 
+    18.1) Transactions
+    18.2) Orders
+    18.3) Pending Orders
+    18.4) Pending Enrolments
+19) call executive Management
+20 ) Delivery charges Management
+21) Business Request page 

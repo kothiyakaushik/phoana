@@ -61,6 +61,7 @@ class GeneralController extends Controller
         
         $this->responseData['country'] = $country;
         $this->code = '1';
+        $this->msg = "";
         Common::output($this->code, $this->msg, $this->responseData);
     }
 
@@ -69,10 +70,37 @@ class GeneralController extends Controller
     	$countryId  = !empty($this->request['country_id']) ? $this->request['country_id'] : "";
     	$stateId  = !empty($this->request['state_id']) ? $this->request['state_id'] : "";
         
-        $country = Common::getStateList($countryId);
+        $state = Common::getStateList($countryId, $stateId);
         
-        $this->responseData['country'] = $country;
+        $this->responseData['state'] = $state;
         $this->code = '1';
+        $this->msg = "";
         Common::output($this->code, $this->msg, $this->responseData);
+    }
+
+    public function getCityList(){
+
+    	$stateId  = !empty($this->request['state_id']) ? $this->request['state_id'] : "";
+    	$cityId  = !empty($this->request['city_id']) ? $this->request['city_id'] : "";
+        
+        $city = Common::getCityList($stateId, $cityId);
+        
+        $this->responseData['city'] = $city;
+        $this->code = '1';
+        $this->msg = "";
+        Common::output($this->code, $this->msg, $this->responseData);
+    }
+
+    public function getPincodeList(){
+    	$cityId  = !empty($this->request['city_id']) ? $this->request['city_id'] : "";
+        $pincodeNo  = !empty($this->request['pincode_no']) ? $this->request['pincode_no'] : "";
+
+
+        $pincodelist = Common::getPincodeList($cityId, $pincodeNo);
+        
+        $this->responseData['pincodelist'] = $pincodelist;
+        $this->code = '1';
+        $this->msg = "";
+        Common::output($this->code, $this->msg, $this->responseData);	
     }
 }

@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class States extends Model
 {
-    //
+    protected $fillable = [
+        'id','name','status','user_id', 'country_id'
+    ];
 }

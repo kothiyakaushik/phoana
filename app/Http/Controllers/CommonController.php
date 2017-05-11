@@ -8,6 +8,9 @@ use App\Models\AdminSettings;
 use App\Models\Users;
 use App\Models\PasswordHistory;
 use App\Models\Countries;
+use App\Models\States;
+use App\Models\Cities;
+use App\Models\Pincodes;
 use Hash;
 //use Mail;
 use View;
@@ -199,9 +202,12 @@ class CommonController extends Controller
         if ($password) {
             
             //if(preg_match_all('$\S*(?=\S{8,10})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])(?=\S*[\W])\S*$', $password))
-            if (!preg_match_all('$\S*(?=\S{8,})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $password))
+            if (!preg_match_all('$\S*(?=\S{8,15})(?=\S*[a-z])(?=\S*[A-Z])(?=\S*[\d])\S*$', $password))
             {
-                $msg = "Minimum 8 and Maximum 10 characters at least 1 Uppercase Alphabet, 1 Lowercase Alphabet, 1 Number and 1 Special Character";
+               
+                $msg = "Please Create Minimum 8 Maximum 15 characters long password with at least 1 Upper case Character, 1 number or 1 special character";
+
+
                 $code = "0";
             }else{
                 
@@ -239,7 +245,7 @@ class CommonController extends Controller
 
     public static function getCountryList($countryId){
 
-        $q = Countries::where('status', "1");
+        $q = Countries::select('id as country_id', 'name','status','user_id')->where('status', "1");
         if ($countryId) {
            $q->where('id', $countryId);
         }
@@ -249,6 +255,48 @@ class CommonController extends Controller
         return $country;
     }
 
+    public static function getStateList($countryId, $stateId){
+
+        $q = States::select('id as state_id','name','status','user_id', 'country_id')->where('status', "1");
+        if ($countryId) {
+           $q->where('country_id', $countryId);
+        }
+        if ($stateId) {
+           $q->where('id', $stateId);
+        }
+        $state =  $q->orderBy('name', 'asc')->get();
+
+        //echo "<pre>";print_r($country);exit;
+        return $state;
+    }
+
+    public static function getCityList($stateId, $cityId){
+        $q = Cities::select('id as city_id','name','status','user_id', 'state_id')->where('status', "1");
+        if ($stateId) {
+           $q->where('state_id', $stateId);
+        }
+        if ($cityId) {
+           $q->where('id', $cityId);
+        }
+        $city =  $q->orderBy('name', 'asc')->get();
+
+        //echo "<pre>";print_r($country);exit;
+        return $city;
+    }
+
+    public static function getPincodeList($cityId, $pincodeNo){
+        $q = Pincodes::select('id as pincode_id','pincode_no','status','user_id', 'city_id')->where('status', "1");
+        if ($cityId) {
+           $q->where('city_id', $cityId);
+        }
+        if ($pincodeNo) {
+           $q->where('id', $pincodeNo);
+        }
+        $pincodelist =  $q->orderBy('pincode_no', 'asc')->get();
+
+        //echo "<pre>";print_r($country);exit;
+        return $pincodelist;
+    }
     
     public static function updateUserProfileComplete($userId){
         if ($userId) {

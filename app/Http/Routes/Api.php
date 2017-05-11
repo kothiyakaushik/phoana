@@ -15,8 +15,8 @@ Route::group(['prefix'=>'api', 'namespace'=>'Api'],function(){
 
 	Route::post('/getCountryList','GeneralController@getCountryList')->name("getCountryList");
 	Route::post('/getStateList','GeneralController@getStateList')->name("getStateList");
-
-	
+	Route::post('/getCityList','GeneralController@getCityList')->name("getCityList");
+	Route::post('/getPincodeList','GeneralController@getPincodeList')->name("getPincodeList");
 	
 	Route::post('/print_token','UserController@print_token')->name("print_token");
 });
